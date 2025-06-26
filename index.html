@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Minecraft Server Control</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #1e1e1e;
+      color: #eee;
+      padding: 2rem;
+    }
+    h1 { color: #90ee90; }
+    button {
+      margin: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      background-color: #333;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #444;
+    }
+    #logs {
+      margin-top: 1rem;
+      padding: 1rem;
+      background-color: #111;
+      border: 1px solid #333;
+      height: 300px;
+      overflow-y: scroll;
+      white-space: pre-wrap;
+    }
+    input[type="text"] {
+      padding: 0.5rem;
+      width: 300px;
+      margin-right: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Minecraft Server Control Panel</h1>
+  <div>
+    <button onclick="startServer()">Start Server</button>
+    <button onclick="stopServer()">Stop Server</button>
+  </div>
+  <div style="margin-top: 1rem;">
+    <input type="text" id="commandInput" placeholder="Enter command..." />
+    <button onclick="sendCommand()">Send Command</button>
+  </div>
+  <div id="status"></div>
+  <div id="logs">Logs will appear here...</div>
+
+  <script>
+    const backendUrl = "http://object-wearing.gl.at.ply.gg:49140";
+
+    async function startServer() {
+      await fetch(`${backendUrl}/start`, { method: 'POST' });
+      updateStatus();
+    }
+
+    async function stopServer() {
+      await fetch(`${backendUrl}/stop`, { method: 'POST' });
+      updateStatus();
+    }
+
+    async function sendCommand() {
+      const command = document.getElementById("commandInput").value;
+      if (!command) return;
+      await fetch(`${backendUrl}/command`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ command })
+      });
+      document.getElementById("commandInput").value = '';
+    }
+
+    async function updateStatus() {
+      const res = await fetch(`${backendUrl}/status`);
+      const data = await res.json();
+      document.getElementById("status").innerText =
+        data.running ? "🟢 Server is running" : "🔴 Server is stopped";
+    }
+
+    async function updateLogs() {
+      const res = await fetch(`${backendUrl}/logs`);
+      const data = await res.json();
+      document.getElementById("logs").innerText = data.logs.join('');
+    }
+
+    setInterval(() => {
+      updateStatus();
+      updateLogs();
+    }, 2000);
+
+    updateStatus();
+    updateLogs();
+  </script>
+</body>
+</html>
